@@ -50,6 +50,7 @@ type
   private
     tcpConnected: boolean;
     timerCycle: integer;
+    timerInterval: integer;
     tcpSocket: TBlockSocket;
     tcpRecived: integer;
     tcpLastError: integer;
@@ -69,7 +70,8 @@ const
   upsDefaultPortStr = '3493';
   appName = 'NUTinfo';
   iniMainSecN = 'programconfig';
-  iniDefIntervalTimerMs = 1000;
+  iniDefIntervalTimerOLMs = 1000;
+  iniDefIntervalTimerOBMs = 500;
   iniDefUpsVarIntervalSec = 30;
 
 implementation
@@ -97,7 +99,8 @@ begin
 
   MainIni := TINIFile.Create(ExtractFilePath(Application.ExeName) + 'configups.ini');
   {Read program config}
-  Timer1.Interval := MainIni.ReadInteger(iniMainSecN, 'interval', iniDefIntervalTimerMs);
+  timerInterval := iniDefIntervalTimerOBMs;
+  Timer1.Interval := timerInterval;
   {Read UPSes configs}
   Ehost.Text := MainIni.ReadString('ups0', 'host', '');
   Eport.Text := MainIni.ReadString('ups0', 'port', upsDefaultPortStr);
@@ -341,7 +344,6 @@ end;
 procedure TFmainw.refreshDataTab;
 var
   s: string;
-  l: string;
 begin
   if listVar.Text.Length < 5 then
     Exit;
@@ -350,37 +352,39 @@ begin
   begin
     Fmainw.Caption := appName + ' - ' + s;
     Application.Title := appName + ' - ' + s;
-    ;
-    if Pos('OL', s) > 0 then
+    if Pos('OL', s) > 0 then      //status OL
     begin
       if Pos('CHRG', s) > 0 then
         Memo2.Color := $00EAFFFF
       else
         Memo2.Color := $00EFFFEA;
       ImageList1.GetBitmap(0, Image1.Picture.Bitmap);
+      timerInterval := iniDefIntervalTimerOLMs;
     end
     else
     begin
-      ImageList1.GetBitmap(1, Image1.Picture.Bitmap);//on battery
+      ImageList1.GetBitmap(1, Image1.Picture.Bitmap);//status OB, on battery
       Memo2.Color := $00EAEAFF;
+      timerInterval := iniDefIntervalTimerOBMs;
     end;
   end;
   Memo2.Clear;
   //error  $00EAEAFF, warning $00EAFFFF, ok $00EFFFEA
   //OB DISCHRG, OL CHRG
+  if Timer1.Interval <> timerInterval then
+    Timer1.Interval := timerInterval;
 
   Memo2.Append('Input Voltage: ' + GetVarByName('input.voltage') +
     'V (Nominal ' + GetVarByName('input.voltage.nominal') + 'V)');
   Memo2.Append('Battery Voltage: ' + GetVarByName('battery.voltage') +
     'V (Nominal ' + GetVarByName('battery.voltage.nominal') + 'V)');
   Memo2.Append('Battery Charge: ' + GetVarByName('battery.charge') +
-    '% (Warning ' + GetVarByName('battery.charge.warning') +
-    '%, Low ' + GetVarByName('battery.charge.low') + '%)');
-  Memo2.Append('UPS load: ' + GetVarByName('ups.load') +
-    '%, runtime: ' + GetVarByName('battery.runtime') + ' sec');
-  Memo2.Append('Device mfr: ' + GetVarByName('device.mfr') +
-    ', model: ' + GetVarByName('device.model') + ' (SN: ' +
-    GetVarByName('device.serial') + ')');
+    '% (Warning ' + GetVarByName('battery.charge.warning') + '%, Low ' +
+    GetVarByName('battery.charge.low') + '%)');
+  Memo2.Append('UPS load: ' + GetVarByName('ups.load') + '%, runtime: ' +
+    GetVarByName('battery.runtime') + ' sec');
+  Memo2.Append('Device mfr: ' + GetVarByName('device.mfr') + ', model: ' +
+    GetVarByName('device.model') + ' (SN: ' + GetVarByName('device.serial') + ')');
 end;
 
 end.
