@@ -1,3 +1,5 @@
+#Check new project https://github.com/dMbski/netUPSinfo 
+
 # NUTinfo
 Simple program to get UPS info from NUT server https://networkupstools.org/, made with Lazarus https://www.lazarus-ide.org/ (Synapse library).
 ><img src="https://github.com/dMbski/NUTinfo/blob/master/screens/Schowek01.jpg" /> 
